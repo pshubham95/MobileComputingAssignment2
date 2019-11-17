@@ -252,8 +252,19 @@ def testMlp(content):
 @app.route('/testModels', methods = ['POST'])
 def testModels():
     content = request.get_json(silent=True)
+    labels = {
+        1: 'book',
+        2: 'car',
+        3: 'gift',
+        4: 'movie',
+        5: 'sell',
+        6: 'total'
+    }
     output = testMlp(content)
-    return str(output)
+    op_dict = {
+        1: output
+    }
+    return json.dumps(op_dict)
 if __name__ == '__main__':
     #trainMlp()
     port = int(os.environ.get('PORT', 5000))
