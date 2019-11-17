@@ -260,11 +260,14 @@ def testModels():
         5: 'sell',
         6: 'total'
     }
-    output = testMlp(content)
-    op_dict = {
-        1: labels[output[0]]
-    }
-    return json.dumps(op_dict)
+    try:
+        output = testMlp(content)
+        op_dict = {
+            1: labels[output[0]]
+        }
+    except Exception as e:
+        return json.dumps({'error': str(e)}), 500
+    return json.dumps(op_dict), 200
 if __name__ == '__main__':
     #trainMlp()
     port = int(os.environ.get('PORT', 5000))
