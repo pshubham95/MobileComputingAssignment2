@@ -1,5 +1,5 @@
 import json
-
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
@@ -256,4 +256,5 @@ def testModels():
     return str(output)
 if __name__ == '__main__':
     trainMlp()
-    app.run()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(port=port)
