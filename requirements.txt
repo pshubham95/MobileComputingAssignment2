@@ -23,7 +23,6 @@ pandas==0.25.3
 pathspec==0.5.9
 pylint==2.4.2
 pyparsing==2.4.4
-pypiwin32==223
 python-dateutil==2.8.0
 pytube==9.5.1
 pytz==2019.3
