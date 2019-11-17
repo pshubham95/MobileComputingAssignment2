@@ -262,7 +262,7 @@ def testModels():
     }
     output = testMlp(content)
     op_dict = {
-        1: output
+        1: labels[output[0]]
     }
     return json.dumps(op_dict)
 if __name__ == '__main__':
