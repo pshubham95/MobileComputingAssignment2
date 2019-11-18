@@ -18,6 +18,7 @@ from sklearn.svm import SVC
 from sklearn.utils import shuffle
 from scipy.stats.stats import pearsonr
 from scipy import spatial
+from sklearn.ensemble import RandomForestClassifier
 
 app = Flask(__name__)
 def fft_feat(val):
@@ -69,7 +70,6 @@ def unit_vector(vector):
 
 def angle_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
             >>> angle_between((1, 0, 0), (0, 1, 0))
             1.5707963267948966
             >>> angle_between((1, 0, 0), (1, 0, 0))
@@ -190,6 +190,46 @@ def getFeaturesDF():
             label_arr.append(labels[folders[i]])
     return [label_arr, training_data]
 
+def trainForest():
+    t = getFeaturesDF()
+    training_data = t[1]
+    label_arr = t[0]
+    sc = StandardScaler()
+    transformed_matrix = sc.fit_transform(training_data)
+    joblib.dump(sc, './scalar/scalarForest', compress=True)
+    print(transformed_matrix)
+    n = 5
+    pca = PCA(n_components=n)
+    principalComponents = pca.fit(transformed_matrix)
+    feat_matrix = pca.transform(transformed_matrix)
+    joblib.dump(pca.components_, './eigenVect/pca_componentsForest')
+    feat_matrix_pd = pd.DataFrame(feat_matrix)
+    feat_matrix_pd['labels'] = label_arr
+    feat_matrix_pd = shuffle(feat_matrix_pd)
+    label_arr = list(feat_matrix_pd['labels'])
+    #print(label_arr)
+    del feat_matrix_pd['labels']
+    feat_matrix_np = np.array(feat_matrix_pd)
+    forestClassifier =  RandomForestClassifier(n_estimators=500, max_features='auto', n_jobs = -1,random_state =150)
+    #print(list(feat_matrix_np))'''
+    #mlpClassifier = SVC(kernel='rbf')
+    forestClassifier.fit(feat_matrix_np, label_arr)
+    joblib.dump(forestClassifier, './models/forestclassifier')
+    
+def testForest(content):
+    pca_components = joblib.load('./eigenVect/pca_componentsForest')
+    eigenValuesArray = np.array(pd.DataFrame(pca_components).T)
+    sc = joblib.load('./scalar/scalarForest')
+    df = convertJsonToCsv(content)
+    df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
+    feat_matrix = [list(itertools.chain(*getFeatures(df)))]
+    transformed_feature_matrix = sc.transform(feat_matrix)
+    print(transformed_feature_matrix)
+    testData = np.dot(transformed_feature_matrix[0], eigenValuesArray)
+    forestModel = joblib.load('./models/forestclassifier')
+    output = forestModel.predict([testData])
+    return output
+
 def trainMlp():
     t = getFeaturesDF()
     training_data = t[1]
@@ -265,7 +305,11 @@ def testModels():
         6: 'total'
     }
     try:
-        output = testMlp(content)
+        inp = input("1. MLP 2.Foredt")
+        if inp==1:
+            output = testMlp(content)
+        else:
+            output = testForest(content)
         op_dict = {
             1: labels[output[0]]
         }
@@ -274,5 +318,6 @@ def testModels():
     return json.dumps(op_dict), 200
 if __name__ == '__main__':
     trainMlp()
+    trainForest()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
