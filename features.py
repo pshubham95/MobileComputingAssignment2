@@ -315,7 +315,7 @@ def testModels():
         return json.dumps({'error': str(e)}), 500
     return json.dumps(op_dict), 200
 if __name__ == '__main__':
-    trainMlp()
-    trainForest()
+    #trainMlp()
+    #trainForest()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
