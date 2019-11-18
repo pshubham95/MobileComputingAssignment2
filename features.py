@@ -221,7 +221,7 @@ def testForest(content):
     eigenValuesArray = np.array(pd.DataFrame(pca_components).T)
     sc = joblib.load('./scalar/scalarForest')
     df = convertJsonToCsv(content)
-    df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
+    #df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
     feat_matrix = [list(itertools.chain(*getFeatures(df)))]
     transformed_feature_matrix = sc.transform(feat_matrix)
     print(transformed_feature_matrix)
@@ -305,13 +305,11 @@ def testModels():
         6: 'total'
     }
     try:
-        inp = input("1. MLP 2.Foredt")
-        if inp==1:
-            output = testMlp(content)
-        else:
-            output = testForest(content)
+        output = testMlp(content)
+        outputForest = testForest(content)
         op_dict = {
-            1: labels[output[0]]
+            1: labels[output[0]],
+            2: labels[outputForest[0]]
         }
     except Exception as e:
         return json.dumps({'error': str(e)}), 500
