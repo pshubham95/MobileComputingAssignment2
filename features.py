@@ -311,7 +311,9 @@ def testModels():
         outputForest = testForest(content)
         op_dict = {
             '1': labels[output[0]],
-            '2': labels[outputForest[0]]
+            '2': labels[outputForest[0]],
+            '3': labels[outputForest[0]],
+            '4': labels[outputForest[0]]
         }
     except Exception as e:
         return jsonify({'error': str(e)}), 500
