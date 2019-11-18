@@ -150,8 +150,7 @@ def convertJsonToCsv(jsonData):
         csv_data[i] = np.array(one)
     return pd.DataFrame(csv_data, columns=columns)
 
-
-def trainMlp():
+def getFeaturesDF():
     fields = [
         'score_overall',
         'leftElbow_score',
@@ -169,7 +168,7 @@ def trainMlp():
         'nose_score',
         'nose_x',
         'nose_y'
-        ]
+    ]
     folders = ['book', 'car', 'gift', 'movie', 'sell', 'total']
     labels = {
         'book': 1,
@@ -182,14 +181,19 @@ def trainMlp():
     label_arr = []
     training_data = []
     for i in range(0, len(folders)):
-        onlyfiles = listdir("./CSV/data/"+folders[i]+"/")
+        onlyfiles = listdir("./CSV/data/" + folders[i] + "/")
         for j in range(0, len(onlyfiles)):
-            #print('./CSV/data/'+folders[i]+'/'+onlyfiles[j])
-            df = pd.read_csv('./CSV/data/'+folders[i]+'/'+onlyfiles[j], usecols=fields)
+            # print('./CSV/data/'+folders[i]+'/'+onlyfiles[j])
+            df = pd.read_csv('./CSV/data/' + folders[i] + '/' + onlyfiles[j], usecols=fields)
             feature_matrix = getFeatures(df)
             training_data.append(list(itertools.chain(*feature_matrix)))
             label_arr.append(labels[folders[i]])
+    return [label_arr, training_data]
 
+def trainMlp():
+    t = getFeaturesDF()
+    training_data = t[1]
+    label_arr = t[0]
     sc = StandardScaler()
     transformed_matrix = sc.fit_transform(training_data)
     joblib.dump(sc, './scalar/scalar', compress=True)
@@ -269,6 +273,6 @@ def testModels():
         return json.dumps({'error': str(e)}), 500
     return json.dumps(op_dict), 200
 if __name__ == '__main__':
-    #trainMlp()
+    trainMlp()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
