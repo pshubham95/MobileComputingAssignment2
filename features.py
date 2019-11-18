@@ -244,7 +244,7 @@ def testMlp(content):
     eigenValuesArray = np.array(pd.DataFrame(pca_components).T)
     sc = joblib.load('./scalar/scalar')
     df = convertJsonToCsv(content)
-    df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
+    #df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
     feat_matrix = [list(itertools.chain(*getFeatures(df)))]
     transformed_feature_matrix = sc.transform(feat_matrix)
     print(transformed_feature_matrix)
