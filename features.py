@@ -258,7 +258,7 @@ def trainMlp():
     joblib.dump(mlpClassifier, './models/mlpclassifier')
 
 
-    '''kf = KFold(n_splits=50)
+    '''kf = KFold(n_splits=20)
     scores = []
     for train_index, test_index in kf.split(feat_matrix_np):
         X_train = []
@@ -275,7 +275,8 @@ def trainMlp():
                        hidden_layer_sizes=(300, 100), random_state=150)
         svclassifier.fit(X_train, y_train)
         score = svclassifier.score(X_test, y_test)
-        scores.append(score)'''
+        scores.append(score)
+    print(np.array(scores).mean())'''
 #trainMlp()
 #print(np.array(scores).mean())
 
@@ -296,6 +297,7 @@ def testMlp(content):
 @app.route('/testModels', methods = ['POST'])
 def testModels():
     content = request.get_json(silent=True)
+    print(content)
     labels = {
         1: 'book',
         2: 'car',
