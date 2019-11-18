@@ -7,7 +7,7 @@ from scipy import fftpack,integrate
 import numpy as np
 from scipy.stats import kurtosis
 from os import listdir
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 from sklearn.externals import joblib
 from sklearn.neural_network import MLPClassifier
@@ -314,8 +314,8 @@ def testModels():
             '2': labels[outputForest[0]]
         }
     except Exception as e:
-        return json.dumps({'error': str(e)}), 500
-    return json.dumps(op_dict), 200
+        return jsonify({'error': str(e)}), 500
+    return jsonify(op_dict), 200
 if __name__ == '__main__':
     #trainMlp()
     #trainForest()
