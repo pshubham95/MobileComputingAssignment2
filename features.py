@@ -310,8 +310,8 @@ def testModels():
         output = testMlp(content)
         outputForest = testForest(content)
         op_dict = {
-            1: labels[output[0]],
-            2: labels[outputForest[0]]
+            '1': labels[output[0]],
+            '2': labels[outputForest[0]]
         }
     except Exception as e:
         return json.dumps({'error': str(e)}), 500
