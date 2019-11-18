@@ -16,6 +16,8 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.utils import shuffle
+from sklearn.tree import DecisionTreeClassifier
+from sj
 from scipy.stats.stats import pearsonr
 from scipy import spatial
 
@@ -190,6 +192,43 @@ def getFeaturesDF():
             label_arr.append(labels[folders[i]])
     return [label_arr, training_data]
 
+def trainDecisionTree():
+    t = getFeaturesDF()
+    training_data = t[1]
+    label_arr = t[0]
+    sc = StandardScaler()
+    transformed_matrix = sc.fit_transform(training_data)
+    joblib.dump(sc, './scalar/scalar', compress=True)
+    n = 5
+    pca = PCA(n_components=n)
+    principalComponents = pca.fit(transformed_matrix)
+    feat_matrix = pca.transform(transformed_matrix)
+    joblib.dump(pca.components_, './eigenVect/pca_components')
+    feat_matrix_pd = pd.DataFrame(feat_matrix)
+    feat_matrix_pd['labels'] = label_arr
+    feat_matrix_pd = shuffle(feat_matrix_pd)
+    label_arr = list(feat_matrix_pd['labels'])
+
+    del feat_matrix_pd['labels']
+    feat_matrix_np = np.array(feat_matrix_pd)
+    decsionTree = DecisionTreeClassifier()
+    decsionTree.fit(feat_matrix_np, label_arr)
+    joblib.dump(decsionTree, './models/decisiontree')
+
+def testDecisionTree():
+    pca_components = joblib.load('./eigenVect/pca_components')
+    eigenValuesArray = np.array(pd.DataFrame(pca_components).T)
+    sc = joblib.load('./scalar/scalar')
+    df = convertJsonToCsv(content)
+    df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
+    feat_matrix = [list(itertools.chain(*getFeatures(df)))]
+    transformed_feature_matrix = sc.transform(feat_matrix)
+    print(transformed_feature_matrix)
+    testData = np.dot(transformed_feature_matrix[0], eigenValuesArray)
+    mlpModel = joblib.load('./models/decisiontree')
+    output = mlpModel.predict([testData])
+    return output
+
 def trainMlp():
     t = getFeaturesDF()
     training_data = t[1]
@@ -254,6 +293,26 @@ def testMlp(content):
     return output
 
 @app.route('/testModels', methods = ['POST'])
+def testModelDecisionTree():
+    content = request.get_json(silent=True)
+    labels = {
+        1: 'book',
+        2: 'car',
+        3: 'gift',
+        4: 'movie',
+        5: 'sell',
+        6: 'total'
+    }
+    try:
+        output = testDecisionTree(content)
+        op_dict = {
+            1: labels[output[0]]
+        }
+    except Exception as e:
+        return json.dumps({'error': str(e)}), 500
+    return json.dumps(op_dict), 200
+
+@app.route('/testModels', methods = ['POST'])
 def testModels():
     content = request.get_json(silent=True)
     labels = {
@@ -274,5 +333,6 @@ def testModels():
     return json.dumps(op_dict), 200
 if __name__ == '__main__':
     trainMlp()
+    trainDecisionTree()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
