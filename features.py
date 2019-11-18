@@ -15,6 +15,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import shuffle
 from scipy.stats.stats import pearsonr
 from scipy import spatial
@@ -295,6 +296,109 @@ def testMlp(content):
     output = mlpModel.predict([testData])
     return output
 
+
+def trainDecisionTree():
+    fields = [
+        'score_overall',
+        'leftElbow_score',
+        'leftElbow_x',
+        'leftElbow_y',
+        'rightElbow_score',
+        'rightElbow_x',
+        'rightElbow_y',
+        'leftWrist_score',
+        'leftWrist_x',
+        'leftWrist_y',
+        'rightWrist_score',
+        'rightWrist_x',
+        'rightWrist_y',
+        'nose_score',
+        'nose_x',
+        'nose_y'
+    ]
+    folders = ['book', 'car', 'gift', 'movie', 'sell', 'total']
+    labels = {
+        'book': 1,
+        'car': 2,
+        'gift': 3,
+        'movie': 4,
+        'sell': 5,
+        'total': 6
+    }
+    label_arr = []
+    training_data = []
+    for i in range(0, len(folders)):
+        onlyfiles = listdir("./CSV/data/" + folders[i] + "/")
+        for j in range(0, len(onlyfiles)):
+            # print('./CSV/data/'+folders[i]+'/'+onlyfiles[j])
+            df = pd.read_csv('./CSV/data/' + folders[i] + '/' + onlyfiles[j], usecols=fields)
+            feature_matrix = getFeatures(df)
+            training_data.append(list(itertools.chain(*feature_matrix)))
+            label_arr.append(labels[folders[i]])
+
+    sc = StandardScaler()
+    transformed_matrix = sc.fit_transform(training_data)
+    joblib.dump(sc, './scalar/scalar', compress=True)
+    print(transformed_matrix)
+    n = 5
+    pca = PCA(n_components=n)
+    principalComponents = pca.fit(transformed_matrix)
+    feat_matrix = pca.transform(transformed_matrix)
+    joblib.dump(pca.components_, './eigenVect/pca_components')
+    feat_matrix_pd = pd.DataFrame(feat_matrix)
+    feat_matrix_pd['labels'] = label_arr
+    feat_matrix_pd = shuffle(feat_matrix_pd)
+    label_arr = list(feat_matrix_pd['labels'])
+    # print(label_arr)
+    del feat_matrix_pd['labels']
+    feat_matrix_np = np.array(feat_matrix_pd)
+    decision_tree = DecisionTreeClassifier()
+    decision_tree.fit(feat_matrix_np, label_arr)
+    joblib.dump(decision_tree, './models/decision_tree')
+    # mlpClassifier =  MLPClassifier(solver='lbfgs', alpha=1e-5,
+
+    #                   hidden_layer_sizes=(300, 100), random_state=150)
+    # print(list(feat_matrix_np))'''
+    # mlpClassifier = SVC(kernel='rbf')
+    # mlpClassifier.fit(feat_matrix_np, label_arr)
+    # joblib.dump(mlpClassifier, './models/mlpclassifier')
+
+    '''kf = KFold(n_splits=50)
+    scores = []
+    for train_index, test_index in kf.split(feat_matrix_np):
+        X_train = []
+        X_test = []
+        y_train = []
+        y_test = []
+        for i in range(0 ,len(train_index)):
+            X_train.append(feat_matrix_np[train_index[i]])
+            y_train.append(label_arr[train_index[i]])
+        for i in range(0, len(test_index)):
+            X_test.append(feat_matrix_np[test_index[i]])
+            y_test.append(label_arr[test_index[i]])
+        svclassifier =  MLPClassifier(solver='lbfgs', alpha=1e-5,
+                       hidden_layer_sizes=(300, 100), random_state=150)
+        svclassifier.fit(X_train, y_train)
+        score = svclassifier.score(X_test, y_test)
+        scores.append(score)'''
+
+def testDecisionTree(content):
+    pca_components = joblib.load('./eigenVect/pca_components')
+    eigenValuesArray = np.array(pd.DataFrame(pca_components).T)
+    sc = joblib.load('./scalar/scalar')
+    df = convertJsonToCsv(content)
+    #df = pd.read_csv('./CSV/data/total/total_1_narvekar.csv')
+    feat_matrix = [list(itertools.chain(*getFeatures(df)))]
+    transformed_feature_matrix = sc.transform(feat_matrix)
+    print(transformed_feature_matrix)
+    testData = np.dot(transformed_feature_matrix[0], eigenValuesArray)
+    decisionTreeModel = joblib.load('./models/decision_tree')
+    output = decisionTreeModel.predict([testData])
+    return output
+
+# trainMlp()
+# print(np.array(scores).mean())
+
 def trainKNN():
     t = getFeaturesDF()
     training_data = t[1]
@@ -349,17 +453,20 @@ def testModels():
         output = testMlp(content)
         outputForest = testForest(content)
         outputKNN = testKNN(content)
+        outputDecisionTress = testDecisionTree(content)
         op_dict = {
             '1': labels[output[0]],
             '2': labels[outputForest[0]],
-            '3': labels[outputKNN[0]]
+            '3': labels[outputKNN[0]],
+            '4': labels[outputDecisionTress[0]]
         }
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     return jsonify(op_dict), 200
 if __name__ == '__main__':
-    #trainMlp()
-    #trainForest()
-    #trainKNN()
+    trainMlp()
+    trainForest()
+    trainKNN()
+    trainDecisionTree()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
